@@ -89,12 +89,9 @@
 			var controlx, controly, controlz;
 			gui.add(controls, "showControlPoints").name("Prikaži kontrolne točke").onChange(function(visibility) {
 				if (visibility) {
-					controlx = gui.add(controls, "x").min(-50).max(50).step(1).listen();
-					controly = gui.add(controls, "y").min(-50).max(50).step(1).listen();
-					controlz = gui.add(controls, "z").min(-50).max(50).step(1).listen();
-					controlx.onFinishChange(updateActiveControlPointPosition);
-					controly.onFinishChange(updateActiveControlPointPosition);
-					controlz.onFinishChange(updateActiveControlPointPosition);
+					controlx = gui.add(controls, "x").listen();
+					controly = gui.add(controls, "y").listen();
+					controlz = gui.add(controls, "z").listen();
 				} else {
 					gui.remove(controlx);
 					gui.remove(controly);
@@ -105,7 +102,6 @@
 				setControlPointsVisibility(visibility);
 				renderScene();
 			});
-			//controlx.setValue(1);  // za postavljanje vrijednosti
 			
 			function updateActivePointControls() {
 				controls.x = activeControlPoint.position.x;
@@ -255,8 +251,8 @@
 			}
 
 
-			function updateActiveControlPointPosition() {
-				activeControlPoint.position.set(controls.x, controls.y, controls.z);
+			function updateActiveControlPointPosition(x, y, z) {
+				activeControlPoint.position.set(x, y, z);
 				var i = activeControlPoint.name.split("-");  // active control point index
 				bezierControlPoints[ i[0] ][ i[1] ] = new THREE.Vector3(controls.x, controls.y, controls.z);
 				redrawBezierSurface();
@@ -264,19 +260,10 @@
 			}
 
 
-			// enabling selection of control points
-			$(document).on("touchstart", function(e) {
-				e.preventDefault();
-				e.clientX = e.touches[0].clientX;
-				e.clientY = e.touches[0].clientY;
-				onControlPointClick(e);
-			});
-
-
-			$(document).on("click", onControlPointClick); 
+			$(document).on("mousedown", onControlPointClick);
 
 			function onControlPointClick(e) {
-				e.preventDefault();
+				e.stopPropagation();
 
 				var mouse = new THREE.Vector2();
 				var raycaster = new THREE.Raycaster();
@@ -288,6 +275,8 @@
 				var intersectedObjects = raycaster.intersectObjects(controlPoints);
 
 				if (intersectedObjects.length > 0) {
+					cameraControls.enabled = false;  // disabling camera rotation
+
 					var newActiveControlPoint = intersectedObjects[0].object;
 
 					if (newActiveControlPoint.visible) {
@@ -298,8 +287,34 @@
 
 						activeControlPoint = newActiveControlPoint;
 
-						renderScene();
 						updateActivePointControls();
+						renderScene();
+
+						var planeNormal = activeControlPoint.position.clone().sub(camera.position);
+						var distanceFromOrigin = (planeNormal.x * activeControlPoint.position.x + planeNormal.y * activeControlPoint.position.y + planeNormal.z * activeControlPoint.position.z) / planeNormal.length();
+    					var plane = new THREE.Plane(planeNormal, -distanceFromOrigin);
+
+						$(document).on("mousemove", function(e) {
+							var mouseMove = new THREE.Vector3();
+        					//mouseMove.x = (e.clientX / renderer.domElement.width) * 2 - 1;
+        					//mouseMove.y = - (e.clientY / renderer.domElement.height) * 2 + 1;
+        					mouseMove.x = mouse.x;  // ovo obrisati! Krivo je i samo za testiranje. ono gore odkomentirati
+        					mouseMove.y = mouse.y;
+        					mouseMove.z = 1;
+
+        					mouseMove.unproject(camera);
+    						var ray = new THREE.Ray(camera.position, mouseMove.sub(camera.position).normalize());
+    						var intersection = ray.intersectPlane(plane);
+    						console.log(intersection);
+
+						    //updateActiveControlPointPosition(intersection.x, intersection.y, intersection.z);
+						});
+
+						$(document).on("mouseup", function(e) {
+							$(document).off("mousemove");
+							$(document).off("mouseup");
+							//cameraControls.enabled = true;  // enabling camera controls again
+						});
 					}
 				}
 			}
