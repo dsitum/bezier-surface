@@ -291,20 +291,20 @@
 						renderScene();
 
 						var planeNormal = activeControlPoint.position.clone().sub(camera.position);
-    					var plane = new THREE.Plane();
-    					plane.setFromNormalAndCoplanarPoint(planeNormal, activeControlPoint.position);
+						var plane = new THREE.Plane();
+						plane.setFromNormalAndCoplanarPoint(planeNormal, activeControlPoint.position);
 
 						$(document).on("mousemove", function(e) {
 							var mouseMove = new THREE.Vector3();
-        					mouseMove.x = (e.clientX / renderer.domElement.width) * 2 - 1;
-        					mouseMove.y = - (e.clientY / renderer.domElement.height) * 2 + 1;
-        					mouseMove.z = 1;
+							mouseMove.x = (e.clientX / renderer.domElement.width) * 2 - 1;
+							mouseMove.y = - (e.clientY / renderer.domElement.height) * 2 + 1;
+							mouseMove.z = 1;
 
-        					mouseMove.unproject(camera);
-    						var ray = new THREE.Ray(camera.position, mouseMove.sub(camera.position).normalize());
-    						var intersection = ray.intersectPlane(plane);
+							mouseMove.unproject(camera);
+							var ray = new THREE.Ray(camera.position, mouseMove.sub(camera.position).normalize());
+							var intersection = ray.intersectPlane(plane);
 
-						    updateActiveControlPointPosition(intersection.x, intersection.y, intersection.z);
+							updateActiveControlPointPosition(intersection.x, intersection.y, intersection.z);
 						});
 
 						$(document).on("mouseup", function(e) {
@@ -327,17 +327,17 @@
 			var ambientLight = new THREE.AmbientLight(0x0c0c0c);
 			scene.add(ambientLight);
 
-	        var spotLightBelow = new THREE.SpotLight(0xffffff);
-	        spotLightBelow.position.set(20, -40, 20);
-	        spotLightBelow.target = bezierSurface;
-	        spotLightBelow.exponent = 5;
-	        scene.add(spotLightBelow);
+			var spotLightBelow = new THREE.SpotLight(0xffffff);
+			spotLightBelow.position.set(20, -40, 20);
+			spotLightBelow.target = bezierSurface;
+			spotLightBelow.exponent = 5;
+			scene.add(spotLightBelow);
 
-	        var spotLightAbove = new THREE.SpotLight(0xffffff);
-	        spotLightAbove.position.set(20,40,20);
-	        spotLightAbove.target = bezierSurface;
-	        spotLightAbove.exponent = 3;
-	        scene.add(spotLightAbove);   
+			var spotLightAbove = new THREE.SpotLight(0xffffff);
+			spotLightAbove.position.set(20,40,20);
+			spotLightAbove.target = bezierSurface;
+			spotLightAbove.exponent = 3;
+			scene.add(spotLightAbove);   
 
 
 
