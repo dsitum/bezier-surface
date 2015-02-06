@@ -47,9 +47,9 @@
 			// interactive controls
 			var controls = new function() {
 				this.color = 0x17a6ff;
-				this.x = 0;
-				this.y = 0;
-				this.z = 0;
+				this.x = 0.0;
+				this.y = 0.0;
+				this.z = 0.0;
 				this.showControlPoints = false;
 				this.wireframe = false;
 				this.bezierCurves = 51;
@@ -107,6 +107,7 @@
 				controls.x = activeControlPoint.position.x;
 				controls.y = activeControlPoint.position.y;
 				controls.z = activeControlPoint.position.z;
+				controls.x.toFixed(2);
 			}
 
 
@@ -254,17 +255,16 @@
 			function updateActiveControlPointPosition(x, y, z) {
 				activeControlPoint.position.set(x, y, z);
 				var i = activeControlPoint.name.split("-");  // active control point index
-				bezierControlPoints[ i[0] ][ i[1] ] = new THREE.Vector3(controls.x, controls.y, controls.z);
+				bezierControlPoints[ i[0] ][ i[1] ] = new THREE.Vector3(x, y, z);
+				updateActivePointControls();
 				redrawBezierSurface();
 				renderScene();
 			}
 
 
-			$(document).on("mousedown", onControlPointClick);
+			document.addEventListener("mousedown", onControlPointClick, true);  // done with pure javascript (without jquery because jquery doesn't support event capturing, which is essential if we want to avoid bugs with mousedown event, which is used for both rotation and placement of control points)
 
 			function onControlPointClick(e) {
-				e.stopPropagation();
-
 				var mouse = new THREE.Vector2();
 				var raycaster = new THREE.Raycaster();
 
@@ -291,29 +291,26 @@
 						renderScene();
 
 						var planeNormal = activeControlPoint.position.clone().sub(camera.position);
-						var distanceFromOrigin = (planeNormal.x * activeControlPoint.position.x + planeNormal.y * activeControlPoint.position.y + planeNormal.z * activeControlPoint.position.z) / planeNormal.length();
-    					var plane = new THREE.Plane(planeNormal, -distanceFromOrigin);
+    					var plane = new THREE.Plane();
+    					plane.setFromNormalAndCoplanarPoint(planeNormal, activeControlPoint.position);
 
 						$(document).on("mousemove", function(e) {
 							var mouseMove = new THREE.Vector3();
-        					//mouseMove.x = (e.clientX / renderer.domElement.width) * 2 - 1;
-        					//mouseMove.y = - (e.clientY / renderer.domElement.height) * 2 + 1;
-        					mouseMove.x = mouse.x;  // ovo obrisati! Krivo je i samo za testiranje. ono gore odkomentirati
-        					mouseMove.y = mouse.y;
+        					mouseMove.x = (e.clientX / renderer.domElement.width) * 2 - 1;
+        					mouseMove.y = - (e.clientY / renderer.domElement.height) * 2 + 1;
         					mouseMove.z = 1;
 
         					mouseMove.unproject(camera);
     						var ray = new THREE.Ray(camera.position, mouseMove.sub(camera.position).normalize());
     						var intersection = ray.intersectPlane(plane);
-    						console.log(intersection);
 
-						    //updateActiveControlPointPosition(intersection.x, intersection.y, intersection.z);
+						    updateActiveControlPointPosition(intersection.x, intersection.y, intersection.z);
 						});
 
 						$(document).on("mouseup", function(e) {
 							$(document).off("mousemove");
 							$(document).off("mouseup");
-							//cameraControls.enabled = true;  // enabling camera controls again
+							cameraControls.enabled = true;  // enabling camera controls again
 						});
 					}
 				}
